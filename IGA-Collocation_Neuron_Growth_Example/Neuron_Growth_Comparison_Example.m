@@ -1,4 +1,4 @@
-figure% IGA-collocation Implementation for 2D neuron growth
+% IGA-collocation Implementation for 2D neuron growth
 % Kuanren Qian
 % 06/02/2021
 
@@ -16,7 +16,7 @@ disp('********************************************************************');
 
 %% Variable Initialization
 % time stepping variables
-dtime = 1e-3;
+dtime = 1e-3; %actual dt is calculated in NR
 end_iter = 10000;
 
 % tolerance for NR method
@@ -27,6 +27,8 @@ p = 3;
 q = 3;
 Nx = 40;
 Ny = 40;
+dx = 1;
+dy = 1;
 knotvectorU = [0,0,0,linspace(0,Nx,81),Nx,Nx,Nx].';
 knotvectorV = [0,0,0,linspace(0,Ny,81),Ny,Ny,Ny].';
 
@@ -144,10 +146,10 @@ conct = sparse(conct);
 phi_ones = sparse(zeros([lenu*lenv,1]));
 bcid = sparse(bcid);
 
-%phi_initial_temp = reshape(phi,lenu,lenv);
-%[phidyo,phidxo] = gradient_mat(phi_initial_temp,Nx,Ny,dx,dy);
-%sq_grad_phi = sparse(reshape(phidyo.^2+phidxo.^2,lenu*lenv,1));
-%sum_grad_phi_ori = sum(sq_grad_phi);
+phi_initial_temp = reshape(phi,lenu,lenv);
+[phidyo,phidxo] = gradient_mat(phi_initial_temp,Nx,Ny,dx,dy);
+sq_grad_phi = sparse(reshape(phidyo.^2+phidxo.^2,lenu*lenv,1));
+sum_grad_phi_ori = sum(sq_grad_phi);
 
 % transient iterations
 for iter=1:1:end_iter
@@ -197,8 +199,9 @@ for iter=1:1:end_iter
 % 
         terma2_deriv =  2*NNa.*N1Na.*N1uNv+NNa.^2.*lap ...
             + 2*NNa.*NN1a.*NuN1v;
-        termadx_deriv = N1Naap.*NuN1v+NNaap.*N1uN1v;
-        termady_deriv = NN1aap.*N1uNv+NNaap.*N1uN1v;       
+        %termadx_deriv = N1Naap.*NuN1v+NNaap.*N1uN1v;
+        %termady_deriv = NN1aap.*N1uNv+NNaap.*N1uN1v;  
+        termadxdy_deriv = N1Naap.*(-NuN1v+N1uNv);
         termNL_deriv = -3*NNpk.^2+2*(1.5-E).*NNpk+(E-0.5);
         termNL_deriv = termNL_deriv.*NuNv;
 %         termP1theta_deriv = (1-2.*NNpk).*6.*H.*mag_grad_theta;
@@ -208,7 +211,7 @@ for iter=1:1:end_iter
         R = 1/tau*(terma2-termadx+termady+termNL);
         R = R*dtime-NNpk+(NuNv*phi);
 %         dR = 1/tau*(terma2_deriv-termadx_deriv+termady_deriv+termNL_deriv-termP1theta_deriv);
-        dR = 1/tau*(terma2_deriv-termadx_deriv+termady_deriv+termNL_deriv);
+        dR = 1/tau*(terma2_deriv+termadxdy_deriv+termNL_deriv);
         dR = dR*dtime-NuNv;
 
         % check residual and update guess
@@ -231,7 +234,7 @@ for iter=1:1:end_iter
     dtime_tempr = dt_t;
     dtime_conct = dt_t;
 
-    %% Temperature (Implicit method)
+    %% Temperature (Explicit method)
     temprLHS = NuNv;
     temprRHS = (NuNv*tempr + lap*tempr.*dtime_tempr + kappa*(NuNv*phiK-NuNv*phi));
     temprRHS = temprRHS - temprLHS*tempr_initial;
