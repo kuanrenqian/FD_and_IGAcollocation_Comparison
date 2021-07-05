@@ -37,29 +37,29 @@ lenu = length(knotvectorU)-2*(p-1);
 lenv = length(knotvectorV)-2*(p-1);
 
 % neuron growth variables
-abar = 0.45;
+% abar = 0.45;
 % ab = (abar/(1+delta));
 aniso = 6;
-k_conc = 0.5;
+% k_conc = 0.5;
 kappa= 4;
 alph = 0.9; % changing name to alph cause alpha is a function
 pix=4.0*atan(1.0);
 gamma = 15.0;
 tau = 0.005;
 % tau = 0.0003;
-delta_w = 4*dx;
-gamma_w = 1;
-lambda = 1.0e-16;
-b = 2*atanh(1-2*lambda); %88.9
-W = (6*gamma_w*b)/delta_w;
-M = 10;
+% delta_w = 4*dx;
+% gamma_w = 1;
+% lambda = 1.0e-16;
+% b = 2*atanh(1-2*lambda); %88.9
+% W = (6*gamma_w*b)/delta_w;
+% M = 10;
 % M_phi = (sqrt(2*W)/(6*abar))*M; %50
 M_phi = 1/tau;
 M_theta = 0.5*M_phi;
 D_cell = 10;
 D_liquid = 1;
 s_coeff = 0.002;
-H = 1e-6;
+% H = 1e-6;
 
 delta = 0.2;
 epsilonb = 0.05;
@@ -85,13 +85,15 @@ conct = reshape(conct,lenu*lenv,1);
 %% Constructing coef matrix
 order_deriv = 2;    % highest order of derivatives to calculate
 sprs = 1;   % sparse or not (for kqCollocationDers)
-[NuNv,N1uNv,NuN1v,N1uN1v,N2uNv,NuN2v,N2uN2v,coll_p,size_collpts,Control_points,dersU] ...
+
+% assembling siffness matrix
+[NuNv,N1uNv,NuN1v,N1uN1v,N2uNv,NuN2v,N2uN2v,coll_p,size_collpts,~,dersU] ...
     = kqCollocationDers(knotvectorU,p,knotvectorV,q,order_deriv,sprs);
 lap = N2uNv + NuN2v;
 
+% collocation to control
 phi = NuNv\phi;
 conc = NuNv\conc;
-conct = NuNv\conct;
 
 % initializing theta and temperature
 theta=rand(lenu,lenv);
@@ -99,6 +101,7 @@ theta=reshape(theta,lenu*lenv,1);
 theta = NuNv\theta;
 tempr = zeros([lenu*lenv,1]);
 
+% xxx_initial variables will be used for BC (dirichlet)
 phi_initial = reshape(phi,lenu,lenv);
 conc_initial = reshape(conc,lenu,lenv);
 theta_initial = reshape(theta,lenu,lenv);
@@ -138,6 +141,7 @@ disp('********************************************************************');
 %% Transient iteration computation
 disp('Starting Neuron Growth Model transient iterations...');
 
+% converting to sparse
 phi = sparse(phi);
 conc = sparse(conc);
 theta = sparse(theta);
@@ -146,10 +150,10 @@ conct = sparse(conct);
 phi_ones = sparse(zeros([lenu*lenv,1]));
 bcid = sparse(bcid);
 
-phi_initial_temp = reshape(phi,lenu,lenv);
-[phidyo,phidxo] = gradient_mat(phi_initial_temp,Nx,Ny,dx,dy);
-sq_grad_phi = sparse(reshape(phidyo.^2+phidxo.^2,lenu*lenv,1));
-sum_grad_phi_ori = sum(sq_grad_phi);
+% phi_initial_temp = reshape(phi,lenu,lenv);
+% [phidyo,phidxo] = gradient_mat(phi_initial_temp,Nx,Ny,dx,dy);
+% sq_grad_phi = sparse(reshape(phidyo.^2+phidxo.^2,lenu*lenv,1));
+% sum_grad_phi_ori = sum(sq_grad_phi);
 
 % transient iterations
 for iter=1:1:end_iter
@@ -161,6 +165,7 @@ for iter=1:1:end_iter
     a = reshape(a,lenu*lenv,1);
     aap = reshape(aap,lenu*lenv,1);
 
+    % calculate enery field
     teq = 1;
     E = (alph./pix).*atan(gamma.*(teq-(NuNv*tempr)));       
 
@@ -320,9 +325,10 @@ for iter=1:1:end_iter
         % plot current iteration
         drawnow;
 
-        if(mod(iter,500) == 0)
-            saveas(gcf,sprintf('NeuronGrowth_ex1_%.2d.png',iter));
-        end
+        % save figure every 500 iterations
+%         if(mod(iter,500) == 0)
+%             saveas(gcf,sprintf('NeuronGrowth_ex1_%.2d.png',iter));
+%         end
         
         %% This portion of code expands domain, not needed for comparison case
 %         if(iter~=1)

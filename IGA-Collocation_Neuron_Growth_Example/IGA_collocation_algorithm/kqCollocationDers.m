@@ -14,6 +14,7 @@ lenv = length(knotvectorV)-2*(q-1);
 % knotvectorU = knotvectorU/max(knotvectorU);
 % knotvectorV = knotvectorV/max(knotvectorV);
 
+% calculate collocation points
 k=1;
 coll_p = zeros(length(knotvectorU)-p,2);
 for i = 1:length(knotvectorU)-p-1
@@ -26,7 +27,7 @@ for i = 1:length(knotvectorU)-p-1
 end
 size_collpts = sqrt(length(coll_p));
 
-%Control points
+% %Control points (used for visualization)
 size_cp = size_collpts-2;
 Control_points = zeros(size_cp^2,2);
 k=1;
@@ -38,6 +39,10 @@ for i = 1:size_cp
     end
 end
 
+% initialize variables, NuNv is Ni*Nj, N1uNv is partial derivative in i
+% direction
+% Dimension of these vectors are (length of collocation points) by (length of
+% control points)
 NuNv = zeros([length(coll_p),lenu*lenv]);
 N1uNv = NuNv;
 NuN1v = NuNv;
@@ -46,8 +51,13 @@ N2uNv = NuNv;
 NuN2v = NuNv;
 N2uN2v = NuNv;
 
-% number of basis function (setup this way*) (current version works)
-% using a modified version of derbasisfun3, need to fix this!!!!!
+% number of basis function (setup this way*)
+% using a modified version of derbasisfun3
+% Initially, I wrote these code to also get basis value at boundary, some
+% changes are made in derbasisfun3 to get all basis values.
+% I checked these changes using example problems (reaching machine
+% precision in matlab), see "IGA_collocation_2D_SteadyState_Benchmark.m" in
+% the root folder
 nobu = length(knotvectorU)-p-2; 
 nobv = length(knotvectorV)-p-2;
 
@@ -97,24 +107,24 @@ for i = 1:size_collpts
             end
         end
 
-        sNuNv = sum(NuNv(k,:));
-        sN1uNv = sum(N1uNv(k,:));
-        sNuN1v = sum(NuN1v(k,:));
-        sN2uNv = sum(N2uNv(k,:));
-        sNuN2v = sum(NuN2v(k,:));
-        sN2uN2v = sum(N2uN2v(k,:));
-
-        NuNv(k,:) = NuNv(k,:)/sNuNv;
-        N1uNv(k,:) = N1uNv(k,:)/sNuNv - NuNv(k,:)*sN1uNv/(sNuNv^2);
-        NuN1v(k,:) = NuN1v(k,:)/sNuNv - NuNv(k,:)*sNuN1v/(sNuNv^2);
-
-        N2uNv(k,:) = N2uNv(k,:)/sNuNv - (2*N1uNv(k,:)*sN1uNv+NuNv(k,:)*sN2uNv)/(sNuNv^2) ...
-            + (2*NuNv(k,:)*sN1uNv^2)/(sNuNv^3);
-         NuN2v(k,:) = NuN2v(k,:)/sNuNv - (2*NuN1v(k,:)*sNuN1v+NuNv(k,:)*sNuN2v)/(sNuNv^2) ...
-            + (2*NuNv(k,:)*sNuN1v^2)/(sNuNv^3);       
-
-        N2uN2v(k,:) = N2uNv(k,:)/sNuNv - (N1uNv(k,:)*sNuN1v+NuN1v(k,:)*sN1uNv+NuNv(k,:)*sN2uN2v)/(sNuNv^2) ... 
-            +(2*NuNv(k,:)*sN1uNv*sNuN1v)/(sNuNv^3);
+%         sNuNv = sum(NuNv(k,:));
+%         sN1uNv = sum(N1uNv(k,:));
+%         sNuN1v = sum(NuN1v(k,:));
+%         sN2uNv = sum(N2uNv(k,:));
+%         sNuN2v = sum(NuN2v(k,:));
+%         sN2uN2v = sum(N2uN2v(k,:));
+% 
+%         NuNv(k,:) = NuNv(k,:)/sNuNv;
+%         N1uNv(k,:) = N1uNv(k,:)/sNuNv - NuNv(k,:)*sN1uNv/(sNuNv^2);
+%         NuN1v(k,:) = NuN1v(k,:)/sNuNv - NuNv(k,:)*sNuN1v/(sNuNv^2);
+% 
+%         N2uNv(k,:) = N2uNv(k,:)/sNuNv - (2*N1uNv(k,:)*sN1uNv+NuNv(k,:)*sN2uNv)/(sNuNv^2) ...
+%             + (2*NuNv(k,:)*sN1uNv^2)/(sNuNv^3);
+%          NuN2v(k,:) = NuN2v(k,:)/sNuNv - (2*NuN1v(k,:)*sNuN1v+NuNv(k,:)*sNuN2v)/(sNuNv^2) ...
+%             + (2*NuNv(k,:)*sNuN1v^2)/(sNuNv^3);       
+% 
+%         N2uN2v(k,:) = N2uNv(k,:)/sNuNv - (N1uNv(k,:)*sNuN1v+NuN1v(k,:)*sN1uNv+NuNv(k,:)*sN2uN2v)/(sNuNv^2) ... 
+%             +(2*NuNv(k,:)*sN1uNv*sNuN1v)/(sNuNv^3);
     end
 end
 
