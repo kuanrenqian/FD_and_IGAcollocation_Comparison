@@ -202,11 +202,14 @@ for iter=1:1:end_iter
         termNL = -NNpk.^3+(1.5-E).*NNpk.^2+(E-0.5).*NNpk;
 %         termP1theta = (NNpk-NNpk.^2).*6.*H.*mag_grad_theta;
 % 
-        terma2_deriv =  2*NNa.*N1Na.*N1uNv+NNa.^2.*lap ...
-            + 2*NNa.*NN1a.*NuN1v;
+        if dt_t==0 % these terms only needs to be calculated once
+            terma2_deriv =  2*NNa.*N1Na.*N1uNv+NNa.^2.*lap ...
+                + 2*NNa.*NN1a.*NuN1v;
+            termadxdy_deriv = N1Naap.*(-NuN1v+N1uNv);
+        end
         %termadx_deriv = N1Naap.*NuN1v+NNaap.*N1uN1v;
         %termady_deriv = NN1aap.*N1uNv+NNaap.*N1uN1v;  
-        termadxdy_deriv = N1Naap.*(-NuN1v+N1uNv);
+        
         termNL_deriv = -3*NNpk.^2+2*(1.5-E).*NNpk+(E-0.5);
         termNL_deriv = termNL_deriv.*NuNv;
 %         termP1theta_deriv = (1-2.*NNpk).*6.*H.*mag_grad_theta;
